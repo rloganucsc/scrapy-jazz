@@ -169,36 +169,38 @@ class JazzSpider(Spider):
 	def parse3(self, response):
 
 		albumList = response.meta['albumList']
+		sel = Selector(response)
+		doc = sel.xpath('//div[id*=catalog-data]').extract()
 		recList = p1.findall(doc)
-			for rec in recList:
-	
-				recSeries = q1.search(rec).group()
-				recList = p2.findall(rec)
+                for rec in recList:
 
-				for album in recList:
+                        recSeries = q1.search(rec).group()
+                        recList = p2.findall(rec)
 
-					out = Album()
-		
-					out['recSeries'] = recSeries
+                        for album in recList:
 
-					title=p3.findall(album)[0]
-					out['title'] = title
-		
-					personnel = p4.findall(album)
-					personnel = personnelClean(personnel)
-					out['personnelList'] = personnel
+                                out = Album()
+        
+                                out['recSeries'] = recSeries
 
-					dateLoc = p5.findall(album)
-					dateList = dateClean(dateLoc)
-					locList = locClean(dateLoc)
-					out['dateList'] = dateList
-					out['locList'] = locList
+                                title=p3.findall(album)[0]
+                                out['title'] = title
+        
+                                personnel = p4.findall(album)
+                                personnel = personnelClean(personnel)
+                                out['personnelList'] = personnel
 
-					songs = p6.findall(album)
-					songs = songClean(songs)
-					out['songList'] = songs
+                                dateLoc = p5.findall(album)
+                                dateList = dateClean(dateLoc)
+                                locList = locClean(dateLoc)
+                                out['dateList'] = dateList
+                                out['locList'] = locList
 
-					albumList.append(out)
+                                songs = p6.findall(album)
+                                songs = songClean(songs)
+                                out['songList'] = songs
+
+                                albumList.append(out)
 		return albumList
 		
 
