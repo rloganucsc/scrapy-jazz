@@ -1,0 +1,159 @@
+from scrapy.spider import Spider
+from scrapy.selector import Selector
+from scrapy.http import Request, Response
+from Jazz.items import Album
+import re
+
+#Compile Regular Expressions to use in Parse3
+
+'''
+Expression Name:	Purpose:
+p1			Grabs record series blocks
+q1			Grabs record series block names
+p2			Takes record type block, splits into album blocks
+p3			Takes album block, extracts title
+
+note: For the following RE's we assume that existence of one instance of a feature implies existence of the other features, so they all share 		common indices when extracted. That is if these expressions return lists of length greaterthan 1 item, then we safely assume all the 
+	n-th items the different lists are assosciated to the same block of information.
+
+p4			Takes album block, extracts personnel lists
+p5			Takes album block, extracts location date strings
+p6			Takes album block, extracts song lists
+
+'''
+
+p1 = re.compile(r'<h2>.*?(?=<h2>|$)',re.DOTALL)
+q1 = re.compile(r"(?<=<h2>).*?(?=</h2>)")
+p2 = re.compile(r'<h3>.*?(?=<h3>|$)',re.DOTALL)
+p3 = re.compile(r'(?<=nbsp;).*(?=</a>)',re.DOTALL)
+p4 = re.compile(r'(?<=</h3>).*?(?=<div class="date">)|(?<=</table>).*?(?=<div class="date">)',re.DOTALL)
+p5 = re.compile(r'(?<=<div class="date">).*?(?=</div>)',re.DOTALL) 
+p6 = re.compile(r'(?<=<table width="100%">).*?(?=</table>)',re.DOTALL) 
+
+
+#Main crawler script
+
+class JazzSpider(Spider):
+	'''
+		The idea here is to scrape all of the URLs for different studio's discographies, then scrape album info from each subsequent
+	webpage. Note: Since each studio has multiple pages we're gonna need an intermediary function to get us to the final songlists. The 
+	first parse function creates an AlbumList item and then generates the list of URLs to check next. The for loop then calls the parse2
+	function on each of these URLs passing along the AlbumList so that it can be populated and returned. The parse2 function operates as
+	a typical parse function in that it just scrapes data to fill the required song and album fields for each album.
+
+	Required Fields:
+
+	AlbumList - albums (STR),
+	Album - title (STR), songlist (LIST)
+	Song - songTitle(STR), personnel (LIST of STR), recordingDate (), recordingLoc ()
+	
+	'''
+
+	#Spider Info:
+	
+	name = 'Jazz'
+	allowed_domains = ['jazzdisco.org']
+	start_urls = ['http://www.jazzdisco.org']
+	
+	# Parse 1: This function takes in the homepage of the database
+	#	Then calls parse2 on each link to a record company's
+	#	discography page.
+	
+	def parse(self, response):
+
+		albumList = []
+		
+		sel = Selector(response)
+		sel = sel.xpath('/html/body/div/div[2]/div/div/div/table/tr/td[3]/ul')
+		links = sel[1].xpath('li/a/@href').extract()
+		
+		for link in links:
+			request = Request( 'http://www.jazzdisco.org' + link , callback = self.parse2 )
+			request.meta[ 'albumList' ] = albumList 
+			yield request
+
+	# Parse 2: This function operates similarly to the Parse 1 fct.
+	
+	def parse2(self, response):
+
+		albumList = response.meta['albumList']
+		
+		sel = Selector(response)
+		sel = sel.xpath('/html/body/div/div[2]/div/div/div/ul[1]')		
+		links = sel.xpath('li/a[1]/@href').extract()
+
+		for link in links:
+			request = Request( 'http://www.jazzdisco.org' + link , callback = self.parse3 )
+			request.meta[ 'albumList' ] = albumList 
+			yield request
+	
+	#Parse 3: Due to the flat nature of the source HTML, this parsing function uses a considerably more complicated approach of
+	#	breaking apart the text using regular expressions.
+	
+	def parse3(self, response):
+
+		albumList = response.meta['albumList']
+		recList = p1.findall(doc)
+
+		for rec in recList:
+			recSeries = q1.search(rec).group()
+			recList = p2.findall(rec)
+
+			for album in recList:
+				out = Album()
+		
+				out['recSeries'] = recSeries
+
+				title=p3.findall(album)[0]
+				out['title'] = title
+		
+				personnel = p4.findall(album)
+				out['personnelList'] = personnel
+
+				dateLoc = p5.findall(album)
+				out['dateLocList'] = dateLoc 
+
+				songs = p6.findall(album)
+				out['songList'] = songs
+		
+				albumList.append(out)
+		return albumList
+		
+
+	
+
+
+
+"""	
+	def dateLocSplit(self, strIn):
+		out = []
+		strIn = strIn.lower()
+		monthlist = ['(january)', '(february)', '(march)', '(april)', '(may)', '(june)', '(july)', '(august)', 				'(september)','(october)','(november)','(december)']
+		splitStr = re.split(monthlist,strIn)
+		loc = ''.join(splitStr[:-2])
+		date = ''.join(splitStr[-2:])
+		out.append(loc)
+		out.append(date)
+		return out
+
+class JazzTestSpider(Spider):
+	
+	name = 'JazzTest'
+	allowed_domains=['jazzdisco.org']
+	start_urls=['http://www.jazzdisco.org/atlantic-records/catalog-1200-series/']
+	pattern=re.compile(r'.xa0')
+
+	def parse(self, response):
+		albumList = AlbumList()
+		albumList['albums']=[]
+		
+		sel = Selector(response)
+		sel = sel.xpath('//*[@id="catalog-data"]').extract()[0]
+
+		blocks = sel.split("<h3>")
+		print blocks[1:10]
+		for block in blocks:
+			title = JazzTestSpider.pattern.search(block)
+				
+
+"""
