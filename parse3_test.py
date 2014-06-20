@@ -2106,7 +2106,7 @@ s5			Used for removing those pesky \n signs
 p1 = re.compile(r'<h2>.*?(?=<h2>|$)', re.DOTALL) 
 q1 = re.compile(r"(?<=<h2>).*?(?=</h2>)") 
 p2 = re.compile(r'<h3>.*?(?=<h3>|$)', re.DOTALL) 
-p3 = re.compile(r'(?<=nbsp; ).*(?=</a>)', re.DOTALL) 
+p3 = re.compile(r'(?<=<a).*?(?=</a>)', re.DOTALL) 
 p4 = re.compile(r'(?<=</h3>).*?(?=<div class="date">)|(?<=</table>).*?(?=<div class="date">)', re.DOTALL)
 p5 = re.compile(r'(?<=<div class="date">).*?(?=</div>)', re.DOTALL) 
 p6 = re.compile(r'(?<=<table width="100%">).*?(?=</table>)', re.DOTALL) 
@@ -2208,7 +2208,7 @@ for rec in recList:
 		
 		out['recSeries'] = recSeries
 
-		title=p3.findall(album)[0]
+		title=p3.findall(album)
 		out['title'] = title
 		
 		personnel = p4.findall(album)

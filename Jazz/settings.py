@@ -10,6 +10,12 @@ BOT_NAME = 'Jazz'
 
 SPIDER_MODULES = ['Jazz.spiders']
 NEWSPIDER_MODULE = 'Jazz.spiders'
-
+LOG_LEVEL = 'INFO'
+ITEM_PIPELINES = {
+    'Jazz.pipelines.EmptyItemPipeline': 100,
+    'Jazz.pipelines.DuplicatesPipeline': 200,
+    'Jazz.pipelines.MySQLPipeline': 300
+}
+LOG_LEVEL = 'CRITICAL'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'Jazz (+http://www.yourdomain.com)'

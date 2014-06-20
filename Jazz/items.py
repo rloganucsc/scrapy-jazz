@@ -1,11 +1,21 @@
+# -*- coding: utf-8 -*-
+"""
+Created in Feb 2014
+
+@title: Items
+@author: Robert
+"""
+
 from scrapy.item import Item, Field
 
 class Album(Item):
-	recSeries = Field()
-	title = Field()
-	songList = Field()
-	personnelList = Field()
-	dateList = Field()
-	locList = Field()
+    LabelName = Field()
+    SeriesName = Field()
+    AlbumName = Field()
+    BandLeader = Field()
+    SongList = Field()
+    PersonnelList = Field()
+    DateList = Field()
+    #LocList = Field()
 
 
