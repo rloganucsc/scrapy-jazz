@@ -32,7 +32,7 @@ class EmptyItemPipeline(object):
     
     def process_item(self,item,spider):
         if (item["SongList"]==[]) & (item["PersonnelList"]==[]):
-            raise DropItem()
+            raise DropItem("Empty")
         else:
             return item
             
@@ -44,7 +44,7 @@ class DuplicatesPipeline(object):
     def process_item(self, item, spider):
         clause = item in self.items_seen
         if clause:
-            raise DropItem()
+            raise DropItem("Duplicate")
         else:
             self.items_seen.add(item)
             return item
