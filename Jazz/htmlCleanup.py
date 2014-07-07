@@ -106,6 +106,7 @@ Description:    Function parses notes in inst text to determine which songs
                 notes.
 """
 
+multi_inst_splitter=re.compile(",(?![0-9])")
 note_detector=re.compile(" -[^,-]*")
 
 def gen_playlists(personnel_list,song_list):
@@ -113,29 +114,36 @@ def gen_playlists(personnel_list,song_list):
     cleaned_personnel_list = []
     for personnel_tuple in personnel_list:
         inst = personnel_tuple[1]
+        insts = multi_inst_splitter.split(inst)
+        #Find any notes for personnel & clean inst string 
+        instlist=[]
+        notelist=[]
+        for inst in insts:
+            try:        
+                notes = note_detector.findall(inst)[0][2:]
+                notes = notes.split(",")
+                notelist.append(notes)
+            except IndexError:
+                notes = []
+                notelist.append(notes)
+            inst = note_detector.sub("",inst)
+            instlist.append(inst)
         
-        #Find any notes for personnel & clean inst string        
-        try:        
-            notes = note_detector.findall(inst)[0][2:]
-            notes = notes.split(",")
-        except IndexError:
-            notes = []
-        inst = note_detector.sub("",inst)
-        
-        #Construct list of songs artist performed on
-        appears_on = []
-        if notes == []:
-            appears_on = range(0,len(song_list))
-        for note in notes:
-            note = note.split("/")
-            if len(note) == 1:
-                appears_on.append(int(note[0]))
-            if len(note) == 2:
-                a = int(note[0])
-                b = int(note[1])
-                appears_on = appears_on+range(a-1,b)
-        playlists.append(appears_on)
-        cleaned_personnel_list.append((personnel_tuple[0],inst))
+        for index in range(len(notelist)):
+            #Construct list of songs artist performed on
+            appears_on = []
+            if notelist[index] == []:
+                appears_on = range(0,len(song_list))
+            for note in notelist[index]:
+                note = note.split("/")
+                if len(note) == 1:
+                    appears_on.append(int(note[0]))
+                if len(note) == 2:
+                    a = int(note[0])
+                    b = int(note[1])
+                    appears_on = appears_on+range(a-1,b)
+            playlists.append(appears_on)
+            cleaned_personnel_list.append((personnel_tuple[0],instlist[index]))
     return playlists, cleaned_personnel_list
 
 """

@@ -186,7 +186,6 @@ class JazzSpider(Spider):
     
                 personnel = p4.findall(album)
                 personnel = personnelClean(personnel)
-                #out['PersonnelList'] = personnel
     
                 dateLoc = p5.findall(album)
                 dateList = dateClean(dateLoc)
@@ -196,7 +195,6 @@ class JazzSpider(Spider):
     
                 songs = p6.findall(album)
                 songs = songClean(songs)
-                #out['SongList'] = songs
                 
                 personnel,songs,dateList=Jazz.htmlCleanup.main(
                     personnel,songs,dateList)
@@ -204,7 +202,7 @@ class JazzSpider(Spider):
                 out['PersonnelList'] = personnel    
                 out['DateList'] = dateList
                 out['SongList'] = songs
-                
+                                
                 albumList.append(out)
 		
             return albumList
